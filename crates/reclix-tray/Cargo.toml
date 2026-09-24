@@ -1,0 +1,20 @@
+[package]
+name        = "reclix-tray"
+description = "StatusNotifierItem tray indicator for Reclix"
+version.workspace    = true
+edition.workspace    = true
+license.workspace    = true
+authors.workspace    = true
+repository.workspace = true
+
+[dependencies]
+reclix-core = { path = "../reclix-core" }
+
+tokio       = { workspace = true }
+anyhow      = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+parking_lot = { workspace = true }
+ksni        = { workspace = true }
+zbus        = { workspace = true }
+chrono      = { workspace = true }

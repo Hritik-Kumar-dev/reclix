@@ -1,0 +1,20 @@
+[package]
+name        = "reclix-capture"
+description = "XDG portal + PipeWire screen capture for Reclix"
+version.workspace    = true
+edition.workspace    = true
+license.workspace    = true
+authors.workspace    = true
+repository.workspace = true
+
+[dependencies]
+reclix-core = { path = "../reclix-core" }
+
+tokio       = { workspace = true }
+anyhow      = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+serde       = { workspace = true }
+ashpd       = { workspace = true }
+pipewire    = { workspace = true }
+parking_lot = { workspace = true }

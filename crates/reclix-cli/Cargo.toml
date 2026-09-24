@@ -1,0 +1,27 @@
+[package]
+name        = "reclix-cli"
+description = "Command-line interface for Reclix"
+version.workspace    = true
+edition.workspace    = true
+license.workspace    = true
+authors.workspace    = true
+repository.workspace = true
+
+[[bin]]
+name = "reclix"
+path = "src/main.rs"
+
+[dependencies]
+reclix-core = { path = "../reclix-core" }
+
+tokio       = { workspace = true }
+anyhow      = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+clap        = { workspace = true }
+zbus        = { workspace = true }
+zvariant    = { workspace = true }
+chrono      = { workspace = true }

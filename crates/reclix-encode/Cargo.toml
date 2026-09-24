@@ -1,0 +1,23 @@
+[package]
+name        = "reclix-encode"
+description = "FFmpeg-based encoding pipeline (VA-API / x264) for Reclix"
+version.workspace    = true
+edition.workspace    = true
+license.workspace    = true
+authors.workspace    = true
+repository.workspace = true
+
+[dependencies]
+reclix-core = { path = "../reclix-core" }
+
+tokio       = { workspace = true }
+anyhow      = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+serde       = { workspace = true }
+chrono      = { workspace = true }
+
+# We shell out to the `ffmpeg` binary for maximum compatibility and to avoid
+# linking against FFmpeg's LGPL/GPL shared libs at build time.
+# The `ffmpeg-sidecar` crate manages the subprocess cleanly.
+ffmpeg-sidecar = "2.0"

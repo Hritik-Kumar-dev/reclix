@@ -1,0 +1,44 @@
+[package]
+name        = "reclix-service"
+description = "Reclix background service: D-Bus API, capture orchestration, systemd user service"
+version.workspace    = true
+edition.workspace    = true
+license.workspace    = true
+authors.workspace    = true
+repository.workspace = true
+
+[[bin]]
+name = "reclix-service"
+path = "src/main.rs"
+
+[dependencies]
+reclix-core    = { path = "../reclix-core" }
+reclix-capture = { path = "../reclix-capture" }
+reclix-audio   = { path = "../reclix-audio" }
+reclix-encode  = { path = "../reclix-encode" }
+reclix-tray    = { path = "../reclix-tray" }
+
+tokio          = { workspace = true }
+tokio-stream   = { workspace = true }
+anyhow         = { workspace = true }
+thiserror      = { workspace = true }
+tracing        = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde          = { workspace = true }
+serde_json     = { workspace = true }
+chrono         = { workspace = true }
+uuid           = { workspace = true }
+dirs           = { workspace = true }
+parking_lot    = { workspace = true }
+async-channel  = { workspace = true }
+
+# D-Bus
+zbus           = { workspace = true }
+zvariant       = { workspace = true }
+
+# XDG portals (GlobalShortcuts)
+ashpd          = { workspace = true }
+
+# GTK + libadwaita (for notifications / future overlays)
+gtk4           = { workspace = true }
+libadwaita     = { workspace = true }
