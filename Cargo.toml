@@ -75,6 +75,9 @@ once_cell      = "1"
 # parking_lot
 parking_lot    = "0.12"
 
+# libc
+libc           = "0.2"
+
 [profile.release]
 lto            = "thin"
 codegen-units  = 1

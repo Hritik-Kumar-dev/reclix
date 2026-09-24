@@ -17,7 +17,5 @@ tracing     = { workspace = true }
 serde       = { workspace = true }
 chrono      = { workspace = true }
 
-# We shell out to the `ffmpeg` binary for maximum compatibility and to avoid
-# linking against FFmpeg's LGPL/GPL shared libs at build time.
-# The `ffmpeg-sidecar` crate manages the subprocess cleanly.
-ffmpeg-sidecar = "2.0"
+# We shell out to the system ffmpeg binary — no C linking needed.
+libc = "0.2"
