@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=Reclix
+GenericName=Screen Recorder
+Comment=Lightweight keyboard-first screen recorder
+Icon=reclix
+Exec=reclix-service
+Terminal=false
+Categories=AudioVideo;Video;Recorder;
+Keywords=screen;record;capture;screencast;
+StartupNotify=false
+# Do not show in application launchers — started by systemd user service.
+# Remove the next line if you want a manual launch entry.
+NoDisplay=true

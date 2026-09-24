@@ -1,14 +1,14 @@
 //! FFmpeg encoding pipeline.
 
 use std::{
+    fs::File,
     io::Write,
     path::{Path, PathBuf},
-    process::{Child, ChildStdin, Command, Stdio},
-    time::Duration,
+    process::{Child, Command, Stdio},
 };
 
 use anyhow::{bail, Context};
-use tracing::{debug, error, info, warn};
+use tracing::{info, warn};
 
 use crate::vaapi::probe_vaapi;
 
@@ -170,10 +170,10 @@ impl EncoderPipeline {
 /// multiplexing them in Rust — FFmpeg handles the A/V sync.
 pub struct SegmentEncoder {
     process: Child,
-    /// Write raw video frames here.
-    pub video_stdin: ChildStdin,
+    /// Write raw video frames here (write end of anonymous pipe).
+    pub video_pipe: File,
     /// Write raw audio samples here (None if mic disabled).
-    pub audio_stdin: Option<ChildStdin>,
+    pub audio_pipe: Option<File>,
     output_path: PathBuf,
 }
 
@@ -208,13 +208,9 @@ impl SegmentEncoder {
 
         // ── Video filter chain ────────────────────────────────────────────────
         let vfilter = match backend {
-            VideoBackend::VaApi => {
-                format!("format=nv12,hwupload")
-            }
-            VideoBackend::X264 => {
-                // x264 wants yuv420p.
-                format!("format=yuv420p")
-            }
+            VideoBackend::VaApi => "format=nv12,hwupload".to_string(),
+            // x264 wants yuv420p.
+            VideoBackend::X264 => "format=yuv420p".to_string(),
         };
 
         let mut cmd = Command::new("ffmpeg");
@@ -269,25 +265,10 @@ impl SegmentEncoder {
         // ── Output ────────────────────────────────────────────────────────────
         cmd.args([
             "-f", "matroska",   // MKV container for segments
-            &output_path.to_string_lossy().to_string(),
+            &*output_path.to_string_lossy(),
         ]);
 
-        // Keep the write ends of pipes open in the child by not closing them.
-        // SAFETY: we use pre-opened file descriptors.
-        unsafe {
-            use std::os::unix::process::CommandExt;
-            let vfd = video_read_fd;
-            let afd = audio_read_fd;
-            cmd.pre_exec(move || {
-                // The read-ends are already inherited; close the write ends
-                // inside the child so they don't block EOF detection.
-                // (Nothing to do here — the write ends are in separate Stdio
-                //  objects on the parent side.)
-                Ok(())
-            });
-        }
-
-        // Inherit stdin/stdout so ffmpeg can receive /dev/fd/N.
+        // Inherit stdin/stdout so ffmpeg can read /dev/fd/N.
         cmd.stdin(Stdio::null())
            .stdout(Stdio::null())
            .stderr(Stdio::inherit());
@@ -311,33 +292,31 @@ impl SegmentEncoder {
 
         Ok(Self {
             process,
-            video_stdin: video_stdin_file.into(),
-            audio_stdin: audio_stdin_file.map(Into::into),
+            video_pipe: video_stdin_file,
+            audio_pipe: audio_stdin_file,
             output_path: output_path.to_owned(),
         })
     }
 
     /// Write a raw video frame to the encoder.
     pub fn write_video_frame(&mut self, data: &[u8]) -> anyhow::Result<()> {
-        self.video_stdin
+        self.video_pipe
             .write_all(data)
             .context("write_video_frame: pipe write failed")
     }
 
     /// Write raw audio samples to the encoder.
     pub fn write_audio_samples(&mut self, data: &[u8]) -> anyhow::Result<()> {
-        if let Some(ref mut stdin) = self.audio_stdin {
-            stdin.write_all(data).context("write_audio_samples: pipe write failed")?;
+        if let Some(ref mut pipe) = self.audio_pipe {
+            pipe.write_all(data).context("write_audio_samples: pipe write failed")?;
         }
         Ok(())
     }
 
     /// Finish encoding: close pipes and wait for ffmpeg to exit.
-    /// Returns the output path on success.
     pub fn finish(mut self) -> anyhow::Result<PathBuf> {
-        // Drop stdin handles to signal EOF to ffmpeg.
-        drop(self.video_stdin);
-        drop(self.audio_stdin.take());
+        drop(self.video_pipe);
+        drop(self.audio_pipe.take());
 
         let status = self
             .process

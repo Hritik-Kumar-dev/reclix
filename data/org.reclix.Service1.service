@@ -1,0 +1,15 @@
+# D-Bus session bus activation file.
+# Allows the session bus to auto-start reclix-service when a client calls
+# any method on org.reclix.Service1 for the first time.
+#
+# Install to:
+#   ~/.local/share/dbus-1/services/org.reclix.Service1.service
+# OR system-wide:
+#   /usr/share/dbus-1/services/org.reclix.Service1.service
+
+[D-BUS Service]
+Name=org.reclix.Service1
+Exec=/usr/local/bin/reclix-service
+# For cargo-installed builds, use:
+# Exec=/home/USER/.cargo/bin/reclix-service
+SystemdService=reclix.service

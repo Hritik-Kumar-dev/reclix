@@ -40,21 +40,17 @@ async-channel  = "2"
 notify         = "6"
 
 # D-Bus (zbus — pure-Rust, async-native)
-zbus           = { version = "4", features = ["tokio"] }
-zvariant       = "4"
+zbus           = { version = "5", features = ["tokio"] }
+zvariant       = "5"
 
 # XDG Desktop Portals (ScreenCast, GlobalShortcuts)
-ashpd          = { version = "0.9", features = ["tokio"] }
+ashpd          = { version = "0.9.3", default-features = false, features = ["tokio"] }
 
 # PipeWire Rust bindings
-pipewire       = "0.8"
-
-# GTK / libadwaita (only for service / tray overlay)
-gtk4           = { version = "0.8", features = ["v4_12"] }
-libadwaita     = { version = "0.6", features = ["v1_4"] }
+pipewire       = "0.10"
 
 # Tray / StatusNotifierItem
-ksni           = "0.2"
+ksni           = { version = "0.3", features = ["tokio"] }
 
 # CLI
 clap           = { version = "4", features = ["derive", "env"] }
@@ -77,6 +73,9 @@ parking_lot    = "0.12"
 
 # libc
 libc           = "0.2"
+
+# futures
+futures-util   = "0.3"
 
 [profile.release]
 lto            = "thin"

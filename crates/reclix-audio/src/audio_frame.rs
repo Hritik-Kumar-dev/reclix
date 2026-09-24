@@ -44,12 +44,7 @@ pub struct AudioFrame {
 impl AudioFrame {
     /// Number of frames (channel-agnostic sample points) in this chunk.
     pub fn frame_count(&self) -> usize {
-        let bytes_per_frame =
-            self.format.bytes_per_sample() * self.channels as usize;
-        if bytes_per_frame == 0 {
-            0
-        } else {
-            self.data.len() / bytes_per_frame
-        }
+        let bytes_per_frame = self.format.bytes_per_sample() * self.channels as usize;
+        self.data.len().checked_div(bytes_per_frame).unwrap_or(0)
     }
 }

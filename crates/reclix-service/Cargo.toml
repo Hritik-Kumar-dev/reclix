@@ -11,10 +11,18 @@ repository.workspace = true
 name = "reclix-service"
 path = "src/main.rs"
 
+[features]
+default = []
+# Enable on systems with libpipewire-0.3-dev installed:
+full = [
+    "reclix-capture/pipewire-capture",
+    "reclix-audio/pipewire-audio",
+]
+
 [dependencies]
 reclix-core    = { path = "../reclix-core" }
-reclix-capture = { path = "../reclix-capture" }
-reclix-audio   = { path = "../reclix-audio" }
+reclix-capture = { path = "../reclix-capture", default-features = false }
+reclix-audio   = { path = "../reclix-audio",   default-features = false }
 reclix-encode  = { path = "../reclix-encode" }
 reclix-tray    = { path = "../reclix-tray" }
 
@@ -36,9 +44,11 @@ async-channel  = { workspace = true }
 zbus           = { workspace = true }
 zvariant       = { workspace = true }
 
-# XDG portals (GlobalShortcuts)
+# XDG portals (GlobalShortcuts) — needed even without PipeWire
 ashpd          = { workspace = true }
 
-# GTK + libadwaita (for notifications / future overlays)
-gtk4           = { workspace = true }
-libadwaita     = { workspace = true }
+# futures
+futures-util   = { workspace = true }
+
+# tray handle type
+ksni           = { workspace = true }
