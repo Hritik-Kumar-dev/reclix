@@ -1,137 +1,94 @@
-# Reclix — lightweight Linux-native screen recorder
+# Reclix: Lightweight Linux-Native Screen Recorder
 
 > **"Invisible when recording. Powerful when needed."**
 
-Keyboard-first screen recorder for Ubuntu/GNOME (Wayland-first, X11 fallback). Not an OBS clone, not a screenshot tool.
+Reclix is a keyboard-first screen recorder designed for Ubuntu/GNOME, operating primarily on Wayland with X11 as a fallback. This tool is not an OBS clone nor a mere screenshot utility.
 
-## V0.1 Status — Implemented
+## V0.1 Status: Implemented Features
+
+The following features have been successfully implemented:
 
 | Feature | Status |
 |---|---|
 | Cargo workspace (7 crates) | ✅ |
-| State machine `IDLE→STARTING→RECORDING⇄PAUSED→FINISHING→COMPLETED` (17 tests) | ✅ |
-| Session model (segments, JSON metadata, `~/Videos/Reclix/`) | ✅ |
-| XDG ScreenCast portal + PipeWire capture (full-screen) | ✅ |
-| Microphone via PipeWire | ✅ |
-| FFmpeg encoding `VA-API → libx264` fallback, segment concat → MP4 | ✅ |
-| D-Bus service `org.reclix.Service1` + `systemd --user` + auto-activation | ✅ |
-| `reclix` CLI (`start | pause | resume | finish | status | mic`) | ✅ |
-| Tray indicator (ksni StatusNotifierItem, `media-record` ↔ `🔴 mm:ss` ↔ `⏸ mm:ss`) | ✅ |
-| Global shortcut `Super+Shift+R` via XDG GlobalShortcuts portal | ✅ |
-| Notifications via `notify-send` | ✅ |
+| State machine:  (17 tests) | ✅ |
+| Session model with segments, JSON metadata, stored in  | ✅ |
+| XDG ScreenCast portal with PipeWire capture for full-screen | ✅ |
+| Microphone support through PipeWire | ✅ |
+| FFmpeg encoding with fallback: , segment concatenation to MP4 | ✅ |
+| D-Bus service  with  and auto-activation | ✅ |
+| CLI commands available:  | ✅ |
+| Tray indicator featuring , time elapsed display | ✅ |
+| Global shortcut configured:  via XDG GlobalShortcuts portal | ✅ |
+| Notification support through  | ✅ |
 
 ## Workspace Layout
 
-```
-reclix/
-├─ crates/
-│  ├─ reclix-core/     # state machine, session, config, dbus types (no system deps)
-│  ├─ reclix-capture/  # portal + PipeWire video (feature = pipewire-capture)
-│  ├─ reclix-audio/    # PipeWire mic (feature = pipewire-audio)
-│  ├─ reclix-encode/   # FFmpeg VA-API/x264 pipeline
-│  ├─ reclix-service/  # D-Bus + orchestrator + shortcuts + systemd
-│  ├─ reclix-tray/     # ksni tray
-│  └─ reclix-cli/      # reclix binary
-├─ data/
-│  ├─ reclix.service                 # systemd user unit
-│  ├─ org.reclix.Service1.service    # D-Bus activation
-│  ├─ reclix.desktop                 # .desktop (NoDisplay)
-│  └─ install.sh                     # user install script
-└─ docs/
-```
+
 
 ## Requirements
 
-- Rust ≥1.75, `ffmpeg` on PATH, PipeWire running
-- For full build (capture + mic): `libpipewire-0.3-dev` + `libspa-0.2-dev`
-- Ubuntu 22.04+/GNOME 42+; GlobalShortcuts portal needs `xdg-desktop-portal ≥1.12`, GNOME Shell ≥44
+- Rust version ≥1.75
+-  in your PATH
+- PipeWire must be running
 
-## Build
+For a full build (capture + mic), install:
+- 
+- 
 
-```bash
-# Without system deps (CI, pure-Rust check + tests):
-cargo check --no-default-features
-cargo test  --no-default-features
-cargo clippy --no-default-features
+Compatibility:
+- Ubuntu 22.04+/GNOME 42+
+- GlobalShortcuts portal requires , GNOME Shell ≥44
 
-# Full build (on Ubuntu with PipeWire headers):
-sudo apt install libpipewire-0.3-dev libspa-0.2-dev
-cargo build --release --features reclix-service/full
-# or per-crate: cargo build -p reclix-service --features full
-```
+## Build Instructions
 
-Hardware encoding is probed at runtime: `h264_vaapi` if `/dev/dri/renderD128` + ffmpeg vaapi works, else `libx264 veryfast crf23`.
+To compile without system dependencies (for CI purposes):
 
-## Install (user)
 
-```bash
-cargo install --path crates/reclix-service --features full
-cargo install --path crates/reclix-cli
-bash data/install.sh          # installs systemd unit, D-Bus service, .desktop
-systemctl --user start reclix.service
-reclix status
-```
+For a full build on Ubuntu with PipeWire headers:
+Reading package lists...
+Building dependency tree...
+Reading state information...
 
-Outputs go to `~/Videos/Reclix/reclix_YYYYMMDD_HHMMSS.mp4`; raw segments + `session.json` live in the session dir until exported.
+### Installation (User)
+
+To install Reclix:
+==> Installing binaries to /home/user/.cargo/bin
+==> Installing systemd user unit
+
+Video outputs are saved to , with raw segments and  stored in their respective session directory until exported.
 
 ## Usage
 
-```bash
-reclix start          # Super+Shift+R
-reclix pause          # Super+Shift+Space (or tray → Pause)
-reclix resume         # same toggle
-reclix finish         # Esc or tray → Finish & Export
-reclix status
-reclix mic            # toggle mute
-reclix camera         # V0.3+
-reclix focus          # V0.4+
-```
+Basic commands include:
 
-Tray menu: Pause/Resume, Finish, Mic toggle, System Audio (V0.2, disabled), shortcut cheat-sheet, Settings (V0.2).
 
-Config: `~/.config/reclix/config.json` (fps, vaapi bitrate, x264 crf, shortcuts, mic default). See `reclix-core/src/config.rs`.
+The tray menu allows for Pause/Resume, Finish, and Mic toggle options, as well as system audio settings (V0.2), shortcut cheat-sheet, and more.
 
-## Wayland / Shortcuts — Honest Notes
+Configuration settings are stored in , and include options for fps, video bitrates, shortcuts, and mic defaults. Check  for more details.
 
-- **Bare `Space` cannot be a global shortcut on Wayland.** Compositor owns the keyboard when no window has focus; GNOME won't forward printable keys. Default is `Super+Shift+Space`. XDG GlobalShortcuts portal is the only Wayland-safe mechanism.
-- If the portal is unavailable (older portal/GNOME, X11), the service logs `gsettings` instructions and you can bind keys manually:
-  ```bash
-  BASE=/org/gnome/settings-daemon/plugins/media-keys
-  CB=$BASE/custom-keybindings
-  gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['$CB/reclix0/', '$CB/reclix1/']"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$CB/reclix0/ name 'Reclix Start'
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$CB/reclix0/ command 'reclix start'
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$CB/reclix0/ binding '<Super><Shift>r'
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$CB/reclix1/ name 'Reclix Pause'
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$CB/reclix1/ command 'reclix pause'
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$CB/reclix1/ binding '<Super><Shift>space'
-  ```
-- `XGrab`-based fallback for X11 is planned for V0.2.
+## Wayland Shortcuts: Important Notes
 
-## Architecture
+- **Space can't be a global shortcut on Wayland.** The compositor takes control when no window is focused, preventing GNOME from forwarding printable keys. The default shortcut is . Use the XDG GlobalShortcuts portal for Wayland.
+- If the portal is unavailable (e.g., older versions, X11), you can manually bind keys:
+  
+- A fallback using  for X11 is planned for V0.2.
 
-```
-portal (ashpd) ─fd/node_id─► PipeWire thread ─RawFrame─► mpsc ─► SegmentEncoder (ffmpeg via pipe)
-                                                    AudioFrame ─► (same ffmpeg, second pipe)
-Systemd --user ─► reclix-service (tokio) ─┬─ D-Bus org.reclix.Service1 ─► reclix CLI
-                                          ├─ ksni tray (async, Handle::update)
-                                          └─ GlobalShortcuts portal ─► ShortcutEvent
-State: Orchestrator owns Session + StateMachine + CaptureHandle + MicHandle + SegmentEncoder.
-Pause = close segment encoder + capture.pause() (discard frames); resume = new segment.
-Finish = concat demuxer (ffmpeg -f concat -c copy -movflags +faststart) → MP4.
-Idle CPU ≈ 0 (tokio select! blocks).
-```
+## Architecture Overview
 
-No frames are processed in Rust — orchestrate the media stack.
 
-## Roadmap
 
-- **V0.2** region/window capture, system audio, timer, configurable shortcuts
-- **V0.3** webcam overlay
-- **V0.4** focus mode (cursor Metadata, 2× zoom)
-- **V0.5** session history / segment management
-- **V1.0** lightweight editor, .deb/Flatpak
+No frames are processed in Rust; this system orchestrates the media stack seamlessly.
 
-## License
+## Future Roadmap
 
-GPL-3.0-or-later
+Upcoming features to anticipate:
+- **V0.2:** Window/region capture, system audio integration, timer, configurable shortcuts
+- **V0.3:** Webcam overlay capabilities
+- **V0.4:** Focus mode with cursor metadata and zoom functionality
+- **V0.5:** Session history and segment management
+- **V1.0:** Introduction of a lightweight editor, .deb/Flatpak packaging
+
+## License Information
+
+This project is licensed under the GPL-3.0-or-later license.
